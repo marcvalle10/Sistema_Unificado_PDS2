@@ -12,6 +12,8 @@ import {
 
 import { useReports } from "@/hooks/useReports";
 import { FileHistoryRecord, HistoricalRecord } from "@/types";
+import * as XLSX from "xlsx";
+
 
 
 // Configurar la fuente Bentham
@@ -147,6 +149,52 @@ export function HistoricalReportView() {
           "No se pudo procesar el archivo del historial. Verifica el archivo e intenta nuevamente.",
       });
     }
+  };
+
+   const handleExport = () => {
+    if (filteredData.length === 0) {
+      setAlertModal({
+        type: "error",
+        title: "Sin datos para exportar",
+        message:
+          "No hay registros en el historial que coincidan con los filtros actuales.",
+      });
+      return;
+    }
+
+    // Armamos las filas a exportar
+    const rows = filteredData.map((r, index) => ({
+      "#": index + 1,
+      ID: r.id,
+      Matricula: r.matricula,
+      Expediente: r.expediente,
+      "Nombre completo": r.nombre,
+      "Correo institucional": r.email,
+      "Estado académico": r.estadoAcademico,
+      "Nivel inglés": r.nivelIngles,
+      "Plan de estudios": r.planEstudios,
+      Créditos: r.creditos,
+      Sexo: r.sexo,
+      "Fecha nacimiento": r.fechaNacimiento ?? "",
+      "Tipo alumno": r.tipoAlumno ?? "",
+      "Promedio general": r.promedioGeneral ?? "",
+      "Promedio periodo": r.promedioPeriodo ?? "",
+      "Materias aprobadas": r.materiasAprobadas ?? "",
+      "Materias reprobadas": r.materiasReprobadas ?? "",
+      "Periodo inicio": r.periodoInicio ?? "",
+      "Acta examen prof.": r.actaExamenProfesional ?? "",
+      "Const. exención": r.constanciaExencionExamenProfesional ?? "",
+      "Fecha titulación": r.fechaTitulacion ?? "",
+      "Créditos Culturest": r.creditosCulturest ?? "",
+      "Créditos deportes": r.creditosDeportes ?? "",
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Historial");
+
+    const today = new Date().toISOString().slice(0, 10); // yyyy-mm-dd
+    XLSX.writeFile(wb, `historial_alumnos_${today}.xlsx`);
   };
 
 
@@ -709,11 +757,13 @@ export function HistoricalReportView() {
 
           
 
-          {/* Right side with Export Button */}
+           {/* Right side with Export Button */}
           <div className="flex-1 flex justify-end">
             <Button
               variant="outline"
-              className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+              onClick={handleExport}
+              disabled={filteredData.length === 0}
+              className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg
                 className="w-4 h-4"
