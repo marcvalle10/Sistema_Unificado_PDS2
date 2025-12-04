@@ -407,30 +407,34 @@ export default function ScheduleReportView() {
   };
 
   const confirmDelete = async () => {
-  if (!scheduleToDelete) return;
+    if (!scheduleToDelete) return;
 
-  try {
-    await deleteHorario(scheduleToDelete.id);
-    setHorarios((prev) => prev.filter((h) => h.id !== scheduleToDelete.id));
+    try {
+      await deleteHorario(scheduleToDelete.id);
 
-    setAlert({
-      kind: "success",
-      title: "Horario eliminado",
-      message: "El horario fue eliminado correctamente.",
-    });
-  } catch (error) {
-    console.error("Error al eliminar horario:", error);
-    setAlert({
-      kind: "error",
-      title: "Error al eliminar horario",
-      message:
-        "Ocurrió un error al eliminar el horario. Intenta nuevamente más tarde.",
-    });
-  } finally {
-    setShowDeleteModal(false);
-    setScheduleToDelete(null);
-  }
-};
+      // Refrescamos desde el backend para estar 100% sincronizados
+      const updated = await getHorarios();
+      setHorarios(updated);
+
+      setAlert({
+        kind: "success",
+        title: "Horario eliminado",
+        message: "El horario fue eliminado correctamente.",
+      });
+    } catch (error) {
+      console.error("Error al eliminar horario:", error);
+      setAlert({
+        kind: "error",
+        title: "Error al eliminar horario",
+        message:
+          "Ocurrió un error al eliminar el horario. Intenta nuevamente más tarde.",
+      });
+    } finally {
+      setShowDeleteModal(false);
+      setScheduleToDelete(null);
+    }
+  };
+
 
   const handleShowTable = () => setViewMode("table");
   const handleShowUpload = () => setViewMode("upload");
