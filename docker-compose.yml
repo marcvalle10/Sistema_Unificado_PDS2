@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: sga_pds2_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sga_pds2
+    ports:
+      - "5432:5432"
+    volumes:
+      # Volumen de datos
+      - pgdata_sga_pds2:/var/lib/postgresql/data
+      # Script de inicialización
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+volumes:
+  pgdata_sga_pds2:
