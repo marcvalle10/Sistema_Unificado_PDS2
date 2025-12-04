@@ -268,12 +268,13 @@ export class HorariosController {
   }
 
   static async listarResumen(req: Request, res: Response) {
-    try {
-      const { periodo } = req.query;
+  try {
+    const { periodo } = req.query;
 
-      const params: any[] = [];
+    const params: any[] = [];
       let sql = `
         SELECT
+          id,               
           periodo,
           codigo_materia,
           nombre_materia,
@@ -301,7 +302,7 @@ export class HorariosController {
 
       return res.json({ ok: true, items: rows });
     } catch (err: any) {
-      console.error('Error en listarResumen:', err);
+      console.error("Error en listarResumen:", err);
       return res.status(500).json({
         ok: false,
         error: err?.message || String(err),
