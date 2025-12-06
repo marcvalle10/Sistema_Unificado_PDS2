@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16
@@ -11,11 +9,92 @@ services:
       POSTGRES_DB: sga_pds2
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
     volumes:
       # Volumen de datos
       - pgdata_sga_pds2:/var/lib/postgresql/data
       # Script de inicialización
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  backend_alumnos:
+    build: ./Alumnos-backend
+    container_name: backend_alumnos
+    restart: always
+    env_file: ./Alumnos-backend/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: sga_pds2
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "5001:5001"
+  
+  frontend_alumnos:
+    build: ./Alumnos-frontend
+    container_name: frontend_alumnos
+    restart: always
+    environment:
+      NEXT_PUBLIC:API_URL: http://backend_alumnos:5001
+    ports:
+      - "3001:3001"
+    depends_on:
+      - backend_alumnos
+
+  backend_carga:
+    build: ./Carga-Archivos-backend
+    container_name: backend_carga
+    restart: always
+    env_file: ./Carga-Archivos-backend/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: sga_pds2
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend_carga:
+    build: ./carga-archivos-frontend
+    container_name: frontend_carga
+    restart: always
+    environment:
+      NEXT_PUBLIC_PROFESORES_URL: http://profesores:3000
+    ports:
+      - "4000:3000"
+    depends_on:
+      - backend_carga
+  
+  profesores:
+    build: ./sistema-gestion-academica
+    container_name: profesores
+    restart: always
+    env_file: ./sistema-gestion-academica/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: sga_pds2
+      NEXT_PUBLIC_CARGA_ARCHIVOS_URL: http://frontend_carga:3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      frontend_carga:
+        condition: service_started
 
 volumes:
   pgdata_sga_pds2:
